@@ -2,7 +2,7 @@
 #############################################
 ### THIS IS WORK IN PROGRESS!
 ### DayZ Standalone linuxserver script
-### maintained by thelastnoc
+### maintained by Adamasto
 ### This script uses Wine, Xvfb, Tmux
 #############################################
 
@@ -54,7 +54,7 @@ fn_checkscreen(){
 fn_loadconfig_dayz(){
 	# default config
 	if [ ! -f "${DAYZ_PATH}/.default.cfg" ]; then
-		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/.default.cfg
+		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/Adamasto/dayz-sa_linuxserver/windows-wine/script/.default.cfg
 	fi
 	source ${DAYZ_PATH}/.default.cfg
 	# script config
@@ -64,7 +64,7 @@ fn_loadconfig_dayz(){
 	source ${DAYZ_PATH}/.dayzserver.cfg
 	# hostname/servername
 	if [ ! -f "${DAYZ_PATH}/serverfiles/serverDZ.cfg" ]; then
-		wget -P ${DAYZ_PATH}/serverfiles/ -q https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/serverDZ.cfg
+		wget -P ${DAYZ_PATH}/serverfiles/ -q https://raw.githubusercontent.com/Adamasto/dayz-sa_linuxserver/windows-wine/script/serverDZ.cfg
 	fi
 	defaultservername=$(grep -rwi ${DAYZ_PATH}/serverfiles/serverDZ.cfg -e 'EXAMPLE NAME')
 	if [ "${defaultservername}" != "" ]; then
@@ -74,7 +74,7 @@ fn_loadconfig_dayz(){
 	fi
 	# battleye config and rconpassword setup
 	if [ ! 0 -lt $(ls ${DAYZ_PATH}/serverfiles/battleye/BEServer_x64* 2>/dev/null | wc -w) ]; then
-		wget -P ${DAYZ_PATH}/serverfiles/battleye/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/BEServer_x64.cfg
+		wget -P ${DAYZ_PATH}/serverfiles/battleye/ -qN https://raw.githubusercontent.com/Adamasto/dayz-sa_linuxserver/windows-wine/script/BEServer_x64.cfg
 		passwd=$(openssl rand -base64 8 | tr -dc 'A-Za-z0-9')
 		if [ "${passwd}" == "" ]; then
 			passwd=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c10)
@@ -189,7 +189,7 @@ fn_console_dayz(){
 
 fn_steamlogin_dayz(){
 	if [ ! -f "${DAYZ_PATH}/.steamlogin" ]; then
-		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/.steamlogin
+		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/Adamasto/dayz-sa_linuxserver/windows-wine/script/.steamlogin
 	fi
 	source ${DAYZ_PATH}/.steamlogin
 	if [ "${steamlogin}" == "" ]; then
@@ -342,9 +342,9 @@ fn_wipe_dayz(){
 }
 
 fn_updatescript_dayz(){
-	checkversion=$(curl -s https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/version)
+	checkversion=$(curl -s https://raw.githubusercontent.com/Adamasto/dayz-sa_linuxserver/windows-wine/script/version)
 	if [ ${checkversion} -gt ${version} ]; then
-		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/dayzserver --show-progress
+		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/Adamasto/dayz-sa_linuxserver/windows-wine/script/dayzserver --show-progress
 		chmod u+x dayzserver
 	else
 		printf "No update\n"
