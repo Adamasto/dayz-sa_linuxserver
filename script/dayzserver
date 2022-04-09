@@ -8,7 +8,7 @@
 
 version=17
 DAYZ_PATH=/srv/steamapp/dayz_server
-appid=223350
+appid=223352
 export WINEARCH=win64
 export WINEPREFIX=${DAYZ_PATH}/.wine64
 
