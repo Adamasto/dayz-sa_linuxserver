@@ -217,8 +217,9 @@ fn_install_dayz(){
 	if [ ! -f "${DAYZ_PATH}/serverfiles/DayZServer_x64.exe" ]; then
 		mkdir ${DAYZ_PATH}/serverfiles &> /dev/null
 		printf "[ ${yellow}DayZ${default} ] Downloading DayZ Server-Files!\n"
-		fn_runvalidate_dayz
 		fn_steamlogin_dayz
+		fn_runvalidate_dayz
+		
 	else
 		printf "[ ${lightblue}DayZ${default} ] The Server is already installed.\n"
 		fn_opt_usage
@@ -284,7 +285,7 @@ fn_update_dayz(){
 }
 
 fn_runvalidate_dayz(){
-	${DAYZ_PATH}/steamcmd/steamcmd.sh +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +force_install_dir ${DAYZ_PATH}/serverfiles +app_update "${appid}" validate +quit
+	${DAYZ_PATH}/steamcmd/steamcmd.sh +force_install_dir ${DAYZ_PATH}/serverfiles +app_update "${appid}" validate +login "${steamlogin}" +@sSteamCmdForcePlatformType windows  +quit
 }
 
 fn_validate_dayz(){
