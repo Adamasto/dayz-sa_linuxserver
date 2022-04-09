@@ -6,10 +6,11 @@
 ### This script uses Wine, Xvfb, Tmux
 #############################################
 
-version=16
+version=17
+DAYZ_PATH=/srv/steamapp/dayz_server
 appid=223350
 export WINEARCH=win64
-export WINEPREFIX=${HOME}/.wine64
+export WINEPREFIX=${DAYZ_PATH}/.wine64
 
 if [ "${ansi}" != "off" ]; then
         # echo colors
@@ -52,28 +53,28 @@ fn_checkscreen(){
 
 fn_loadconfig_dayz(){
 	# default config
-	if [ ! -f "${HOME}/.default.cfg" ]; then
-		wget -P ${HOME}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/.default.cfg
+	if [ ! -f "${DAYZ_PATH}/.default.cfg" ]; then
+		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/.default.cfg
 	fi
-	source ${HOME}/.default.cfg
+	source ${DAYZ_PATH}/.default.cfg
 	# script config
-	if [ ! -f "${HOME}/.dayzserver.cfg" ] || [ "$(grep dayzparameter ${HOME}/.dayzserver.cfg)" == "" ]; then
-                cp ${HOME}/.default.cfg ${HOME}/.dayzserver.cfg
+	if [ ! -f "${DAYZ_PATH}/.dayzserver.cfg" ] || [ "$(grep dayzparameter ${DAYZ_PATH}/.dayzserver.cfg)" == "" ]; then
+                cp ${DAYZ_PATH}/.default.cfg ${DAYZ_PATH}/.dayzserver.cfg
         fi
-	source ${HOME}/.dayzserver.cfg
+	source ${DAYZ_PATH}/.dayzserver.cfg
 	# hostname/servername
-	if [ ! -f "${HOME}/serverfiles/serverDZ.cfg" ]; then
-		wget -P ${HOME}/serverfiles/ -q https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/serverDZ.cfg
+	if [ ! -f "${DAYZ_PATH}/serverfiles/serverDZ.cfg" ]; then
+		wget -P ${DAYZ_PATH}/serverfiles/ -q https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/serverDZ.cfg
 	fi
-	defaultservername=$(grep -rwi ${HOME}/serverfiles/serverDZ.cfg -e 'EXAMPLE NAME')
+	defaultservername=$(grep -rwi ${DAYZ_PATH}/serverfiles/serverDZ.cfg -e 'EXAMPLE NAME')
 	if [ "${defaultservername}" != "" ]; then
 		printf "[ ${magenta}SERVER${default} ] Servername is set on default! 'EXAMPLE NAME'\n\n"
 		read -p "Enter a new Servername: " servername
-		sed -i "/hostname/ s/EXAMPLE NAME/${servername}/" "${HOME}/serverfiles/serverDZ.cfg"
+		sed -i "/hostname/ s/EXAMPLE NAME/${servername}/" "${DAYZ_PATH}/serverfiles/serverDZ.cfg"
 	fi
 	# battleye config and rconpassword setup
-	if [ ! 0 -lt $(ls ${HOME}/serverfiles/battleye/BEServer_x64* 2>/dev/null | wc -w) ]; then
-		wget -P ${HOME}/serverfiles/battleye/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/BEServer_x64.cfg
+	if [ ! 0 -lt $(ls ${DAYZ_PATH}/serverfiles/battleye/BEServer_x64* 2>/dev/null | wc -w) ]; then
+		wget -P ${DAYZ_PATH}/serverfiles/battleye/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/BEServer_x64.cfg
 		passwd=$(openssl rand -base64 8 | tr -dc 'A-Za-z0-9')
 		if [ "${passwd}" == "" ]; then
 			passwd=$(< /dev/urandom tr -dc 'A-Za-z0-9' | head -c10)
@@ -82,9 +83,9 @@ fn_loadconfig_dayz(){
 			printf "[ ${red}FAIL${default} ] Could not generate a passwort for RCON!\nOpen the Battleye config with './dayzserver cfg' and enter '3' to open it."
 			exit 1
 		else
-			sed -i "/RConPassword/ s/CHANGEME/${passwd}/" "${HOME}/serverfiles/battleye/BEServer_x64.cfg"
+			sed -i "/RConPassword/ s/CHANGEME/${passwd}/" "${DAYZ_PATH}/serverfiles/battleye/BEServer_x64.cfg"
 			printf "[ ${cyan}INFO${default} ] ${yellow}New "
-			grep RConPassword ${HOME}/serverfiles/battleye/BEServer_x64.cfg
+			grep RConPassword ${DAYZ_PATH}/serverfiles/battleye/BEServer_x64.cfg
 			printf "${default}"
 		fi
 	fi
@@ -102,7 +103,7 @@ fn_fstartfix_dayz(){
 }
 
 fn_start_dayz(){
-	if [ ! -d "${HOME}/.wine64" ]; then
+	if [ ! -d "${DAYZ_PATH}/.wine64" ]; then
 		firststart=1
 	fi
 	fn_status_dayz
@@ -114,9 +115,9 @@ fn_start_dayz(){
 		sleep 0.5
 		fn_loadconfig_dayz
 		sleep 0.5
-		tmux new-session -d -x 23 -y 80 -s dayzserver xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32' wine ${HOME}/serverfiles/DayZServer_x64.exe $dayzparameter
+		tmux new-session -d -x 23 -y 80 -s dayzserver xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32' wine ${DAYZ_PATH}/serverfiles/DayZServer_x64.exe $dayzparameter
 		sleep 1
-		date > ${HOME}/.dayzlockfile
+		date > ${DAYZ_PATH}/.dayzlockfile
 	fi
 	if [ "${firststart}" == "1" ]; then
 		fn_fstartfix_dayz
@@ -132,7 +133,7 @@ fn_stop_dayz(){
 			fn_status_dayz
 			if [ "${dayzstatus}" == "0" ]; then
 				printf "\r[ ${green}OK${default} ] Stopping Server graceful.\n"
-				rm -f ${HOME}/.dayzlockfile
+				rm -f ${DAYZ_PATH}/.dayzlockfile
 				break
 			fi
 			printf "\r[ ${magenta}...${default} ] Stopping Server graceful: ${seconds} seconds"
@@ -143,7 +144,7 @@ fn_stop_dayz(){
 		if [ "${dayzstatus}" != "0" ]; then
 			printf "\n[ ${red}FAIL${default} ] Stopping Server graceful failed. Sending Killall.\n"
 			sleep 2
-			rm -f ${HOME}/.dayzlockfile
+			rm -f ${DAYZ_PATH}/.dayzlockfile
 			killall -u $(whoami)
 		fi
 	else
@@ -160,9 +161,9 @@ fn_restart_dayz(){
 fn_monitor_dayz(){
 	if [ ! -f ".dayzlockupdate" ]; then
 		fn_status_dayz
-		if [ "${dayzstatus}" == "0" ] && [ -f "${HOME}/.dayzlockfile" ]; then
+		if [ "${dayzstatus}" == "0" ] && [ -f "${DAYZ_PATH}/.dayzlockfile" ]; then
 			fn_restart_dayz
-		elif [ "${dayzstatus}" != "0" ] && [ -f "${HOME}/.dayzlockfile" ]; then
+		elif [ "${dayzstatus}" != "0" ] && [ -f "${DAYZ_PATH}/.dayzlockfile" ]; then
 			printf "[ ${lightblue}INFO${default} ] Server should be online!\n"
 		else
 			printf "[ ${yellow}INFO${default} ] Don't use monitor to start the server. Use the start command.\n"
@@ -187,34 +188,34 @@ fn_console_dayz(){
 }
 
 fn_steamlogin_dayz(){
-	if [ ! -f "${HOME}/.steamlogin" ]; then
-		wget -P ${HOME}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/.steamlogin
+	if [ ! -f "${DAYZ_PATH}/.steamlogin" ]; then
+		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/.steamlogin
 	fi
-	source ${HOME}/.steamlogin
+	source ${DAYZ_PATH}/.steamlogin
 	if [ "${steamlogin}" == "" ]; then
 		printf "\n[ ${magenta}STEAM${default} ] "
 		read -p "Please type in your Steamlogin (username): " steamname
 		sleep 0.5
-		sed -i "/steamlogin/ s/=/=$steamname/" ${HOME}/.steamlogin
+		sed -i "/steamlogin/ s/=/=$steamname/" ${DAYZ_PATH}/.steamlogin
 		sleep 0.5
-		source ${HOME}/.steamlogin
+		source ${DAYZ_PATH}/.steamlogin
 	fi
 }
 
 fn_runupdate_dayz(){
-	${HOME}/steamcmd/steamcmd.sh +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +force_install_dir ${HOME}/serverfiles +app_update "${appid}" +quit
+	${DAYZ_PATH}/steamcmd/steamcmd.sh +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +force_install_dir ${DAYZ_PATH}/serverfiles +app_update "${appid}" +quit
 }
 
 fn_install_dayz(){
-	if [ ! -f "${HOME}/steamcmd/steamcmd.sh" ]; then
-		mkdir ${HOME}/steamcmd &> /dev/null
+	if [ ! -f "${DAYZ_PATH}/steamcmd/steamcmd.sh" ]; then
+		mkdir ${DAYZ_PATH}/steamcmd &> /dev/null
 		curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxf - -C steamcmd
 		printf "[ ${yellow}STEAM${default} ] Steamcmd installed\n"
 	else
 		printf "[ ${lightblue}STEAM${default} ] Steamcmd already installed\n"
 	fi
-	if [ ! -f "${HOME}/serverfiles/DayZServer_x64.exe" ]; then
-		mkdir ${HOME}/serverfiles &> /dev/null
+	if [ ! -f "${DAYZ_PATH}/serverfiles/DayZServer_x64.exe" ]; then
+		mkdir ${DAYZ_PATH}/serverfiles &> /dev/null
 		printf "[ ${yellow}DayZ${default} ] Downloading DayZ Server-Files!\n"
 		fn_steamlogin_dayz
 		fn_runvalidate_dayz
@@ -226,17 +227,17 @@ fn_install_dayz(){
 
 fn_update_dayz(){
 	fn_steamlogin_dayz
-	appmanifestfile=${HOME}/serverfiles/steamapps/appmanifest_"${appid}".acf
+	appmanifestfile=${DAYZ_PATH}/serverfiles/steamapps/appmanifest_"${appid}".acf
 	printf "[ ... ] Checking for update: SteamCMD"
 	# gets currentbuild
 	currentbuild=$(grep buildid "${appmanifestfile}" | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d \  -f3)
 	# Removes appinfo.vdf as a fix for not always getting up to date version info from SteamCMD
-	if [ -f "${HOME}/Steam/appcache/appinfo.vdf" ]; then
-		rm -f "${HOME}/Steam/appcache/appinfo.vdf"
+	if [ -f "${DAYZ_PATH}/Steam/appcache/appinfo.vdf" ]; then
+		rm -f "${DAYZ_PATH}/Steam/appcache/appinfo.vdf"
 		sleep 1
 	fi
 	# check for new build
-	availablebuild=$(${HOME}/steamcmd/steamcmd.sh +login "${steamlogin}" +app_info_update 1 +app_info_print "${appid}" +app_info_print "${appid}" +quit | sed -n '/branch/,$p' | grep -m 1 buildid | tr -cd '[:digit:]')
+	availablebuild=$(${DAYZ_PATH}/steamcmd/steamcmd.sh +login "${steamlogin}" +app_info_update 1 +app_info_print "${appid}" +app_info_print "${appid}" +quit | sed -n '/branch/,$p' | grep -m 1 buildid | tr -cd '[:digit:]')
 	if [ -z "${availablebuild}" ]; then
 		printf "\r[ ${red}FAIL${default} ] Checking for update: SteamCMD\n"
 		sleep 0.5
@@ -255,7 +256,7 @@ fn_update_dayz(){
 		printf "\tAvailable build: ${green}${availablebuild}${default}\n"
 		printf "\thttps://steamdb.info/app/${appid}/\n"
 		sleep 0.5
-		date > ${HOME}/.dayzlockupdate
+		date > ${DAYZ_PATH}/.dayzlockupdate
 		printf "\nApplying update"
 		for seconds in {1..3}; do
 			printf "."
@@ -266,12 +267,12 @@ fn_update_dayz(){
 		fn_status_dayz
 		if [ "${dayzstatus}" == "0" ]; then
 			fn_runupdate_dayz
-			rm -f ${HOME}/.dayzlockupdate
+			rm -f ${DAYZ_PATH}/.dayzlockupdate
 		else
 			fn_stop_dayz
 			fn_runupdate_dayz
 			fn_start_dayz
-			rm -f ${HOME}/.dayzlockupdate
+			rm -f ${DAYZ_PATH}/.dayzlockupdate
 		fi
 	else
 		printf "\r[ ${green}OK${default} ] Checking for update: SteamCMD: No update available\n"
@@ -283,7 +284,7 @@ fn_update_dayz(){
 }
 
 fn_runvalidate_dayz(){
-	${HOME}/steamcmd/steamcmd.sh +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +force_install_dir ${HOME}/serverfiles +app_update "${appid}" validate +quit
+	${DAYZ_PATH}/steamcmd/steamcmd.sh +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +force_install_dir ${DAYZ_PATH}/serverfiles +app_update "${appid}" validate +quit
 }
 
 fn_validate_dayz(){
@@ -292,34 +293,34 @@ fn_validate_dayz(){
 	if [ "${dayzstatus}" == "0" ]; then
 		fn_runvalidate_dayz
 	else
-		date > ${HOME}/.dayzlockupdate
+		date > ${DAYZ_PATH}/.dayzlockupdate
 		fn_stop_dayz
 		fn_runvalidate_dayz
-		rm -f ${HOME}/.dayzlockupdate
+		rm -f ${DAYZ_PATH}/.dayzlockupdate
 		fn_start_dayz
 	fi
 }
 
 fn_backup_dayz(){
 	fn_status_dayz
-	if [ ! -d "${HOME}/backup" ]; then
-			mkdir ${HOME}/backup &> /dev/null
+	if [ ! -d "${DAYZ_PATH}/backup" ]; then
+			mkdir ${DAYZ_PATH}/backup &> /dev/null
 	fi
-	missionfolder=$(grep template ${HOME}/serverfiles/serverDZ.cfg | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d \  -f3)
+	missionfolder=$(grep template ${DAYZ_PATH}/serverfiles/serverDZ.cfg | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d \  -f3)
 	if [ "${dayzstatus}" == "0" ]; then
 		printf "[ ${green}DayZ${default} ] Creating backup of Missionfolder: ${cyan}${missionfolder}${default}\n"
-		tar -cf ${HOME}/backup/${missionfolder}-$(date +%Y-%m-%d).tar ${HOME}/serverfiles/mpmissions/${missionfolder}
+		tar -cf ${DAYZ_PATH}/backup/${missionfolder}-$(date +%Y-%m-%d).tar ${DAYZ_PATH}/serverfiles/mpmissions/${missionfolder}
 	else
 		fn_stop_dayz
 		printf "[ ${green}DayZ${default} ] Creating backup of Missionfolder: ${cyan}${missionfolder}${default}\n"
-		tar -cf ${HOME}/backup/${missionfolder}-$(date +%Y-%m-%d).tar ${HOME}/serverfiles/mpmissions/${missionfolder}
+		tar -cf ${DAYZ_PATH}/backup/${missionfolder}-$(date +%Y-%m-%d).tar ${DAYZ_PATH}/serverfiles/mpmissions/${missionfolder}
 		sleep 0.5
 		fn_start_dayz
 	fi
 }
 
 fn_wipe_dayz(){
-	missionfolder=$(grep template ${HOME}/serverfiles/serverDZ.cfg | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d \  -f3)
+	missionfolder=$(grep template ${DAYZ_PATH}/serverfiles/serverDZ.cfg | tr '[:blank:]"' ' ' | tr -s ' ' | cut -d \  -f3)
 	printf "[ ${red}WARNING${default} ] Wiping Players and reset Central Economy state from...\n"
 	for seconds in {9..0}; do
 		printf "\r\t    Selected Mission: ${cyan}${missionfolder}${default} in ${red}"${seconds}"${default} seconds."
@@ -327,13 +328,13 @@ fn_wipe_dayz(){
 	done
 	printf "\n"
 	if [ "${dayzstatus}" == "0" ]; then
-		rm -f ${HOME}/serverfiles/mpmissions/${missionfolder}/storage_1/players.db
-		rm -f ${HOME}/serverfiles/mpmissions/${missionfolder}/storage_1/data/*
+		rm -f ${DAYZ_PATH}/serverfiles/mpmissions/${missionfolder}/storage_1/players.db
+		rm -f ${DAYZ_PATH}/serverfiles/mpmissions/${missionfolder}/storage_1/data/*
 		printf "[ ${yellow}DayZ${default} ] Player.db and Storage-data wiped!\n"
 	else
 		fn_stop_dayz
-		rm -f ${HOME}/serverfiles/mpmissions/${missionfolder}/storage_1/players.db
-		rm -f ${HOME}/serverfiles/mpmissions/${missionfolder}/storage_1/data/*
+		rm -f ${DAYZ_PATH}/serverfiles/mpmissions/${missionfolder}/storage_1/players.db
+		rm -f ${DAYZ_PATH}/serverfiles/mpmissions/${missionfolder}/storage_1/data/*
 		printf "[ ${yellow}DayZ${default} ] Player.db and Storage-data wiped!\n"
 		sleep 0.5
 		fn_start_dayz
@@ -343,7 +344,7 @@ fn_wipe_dayz(){
 fn_updatescript_dayz(){
 	checkversion=$(curl -s https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/version)
 	if [ ${checkversion} -gt ${version} ]; then
-		wget -P ${HOME}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/dayzserver --show-progress
+		wget -P ${DAYZ_PATH}/ -qN https://raw.githubusercontent.com/thelastnoc/dayz-sa_linuxserver/master/script/dayzserver --show-progress
 		chmod u+x dayzserver
 	else
 		printf "No update\n"
@@ -355,11 +356,11 @@ fn_config_dayz(){
 	printf "\nFollowing config Files available!\n\\n\t[${yellow}1${default}] - script\n\t[${yellow}2${default}] - serverDZ\n\t[${yellow}3${default}] - battleye\n\t[${yellow}4${default}] - steamlogin\n\t[${yellow}0${default}] - script-default (read only!)\n\t[${yellow}x${default}] - exit\n\n"
 	read -p "Select the config File: " configfile
 	case "$configfile" in
-		1|script) nano -c ${HOME}/.dayzserver.cfg;;
-		2|server|serverDZ) nano -c ${HOME}/serverfiles/serverDZ.cfg;;
-		3|battleye) nano -c $(ls ${HOME}/serverfiles/battleye/BEServer_x64*);;
-		4|steamlogin) nano -c ${HOME}/.steamlogin;;
-		0|default) nano -cv ${HOME}/.default.cfg;;
+		1|script) nano -c ${DAYZ_PATH}/.dayzserver.cfg;;
+		2|server|serverDZ) nano -c ${DAYZ_PATH}/serverfiles/serverDZ.cfg;;
+		3|battleye) nano -c $(ls ${DAYZ_PATH}/serverfiles/battleye/BEServer_x64*);;
+		4|steamlogin) nano -c ${DAYZ_PATH}/.steamlogin;;
+		0|default) nano -cv ${DAYZ_PATH}/.default.cfg;;
 		*) exit 1
 	esac
 }
@@ -414,11 +415,11 @@ fn_checktmux
 fn_checkscreen
 
 getopt=$1
-if [ ! -f "${HOME}/steamcmd/steamcmd.sh" ] || [ ! -f "${HOME}/serverfiles/DayZServer_x64.exe" ] && [ "${getopt}" != "cfg" ]; then
+if [ ! -f "${DAYZ_PATH}/steamcmd/steamcmd.sh" ] || [ ! -f "${DAYZ_PATH}/serverfiles/DayZServer_x64.exe" ] && [ "${getopt}" != "cfg" ]; then
 	printf "[ ${yellow}INFO${default} ] No installed steamcmd and/or serverfiles found!\n"
-	chmod u+x ${HOME}/dayzserver
+	chmod u+x ${DAYZ_PATH}/dayzserver
 	fn_install_dayz
-	if [ -f "${HOME}/steamcmd/steamcmd.sh" ] && [ -f "${HOME}/serverfiles/DayZServer_x64.exe" ]; then
+	if [ -f "${DAYZ_PATH}/steamcmd/steamcmd.sh" ] && [ -f "${DAYZ_PATH}/serverfiles/DayZServer_x64.exe" ]; then
 		fn_opt_usage
 	fi
 	exit
