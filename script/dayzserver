@@ -103,7 +103,7 @@ fn_fstartfix_dayz(){
 }
 
 fn_start_dayz(){
-	if [ ! -d "${DAYZ_PATH}/.wine64" ]; then
+	if [ ! -d "${HOME}/.wine64" ]; then
 		firststart=1
 	fi
 	fn_status_dayz
