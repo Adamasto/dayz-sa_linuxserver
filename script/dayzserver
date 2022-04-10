@@ -194,7 +194,7 @@ fn_steamlogin_dayz(){
 	source ${DAYZ_PATH}/.steamlogin
 	if [ "${steamlogin}" == "" ]; then
 		printf "\n[ ${magenta}STEAM${default} ] "
-		read -p "Please type in your Steamlogin (username): " steamname
+		read -p "Имя пользователя Steam (username): " steamname
 		sleep 0.5
 		sed -i "/steamlogin/ s/=/=$steamname/" ${DAYZ_PATH}/.steamlogin
 		sleep 0.5
@@ -203,6 +203,7 @@ fn_steamlogin_dayz(){
 }
 
 fn_runupdate_dayz(){
+	fn_loadconfig_dayz
 	${DAYZ_PATH}/steamcmd/steamcmd.sh +force_install_dir ${DAYZ_PATH}/serverfiles +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +app_update "${appid}" +quit
 }
 
@@ -216,6 +217,7 @@ fn_install_dayz(){
 	fi
 	if [ ! -f "${DAYZ_PATH}/serverfiles/DayZServer_x64.exe" ]; then
 		mkdir ${DAYZ_PATH}/serverfiles &> /dev/null
+		mkdir ${DAYZ_PATH}/serverprofile &> /dev/null
 		printf "[ ${yellow}DayZ${default} ] Downloading DayZ Server-Files!\n"
 		fn_steamlogin_dayz
 		fn_runvalidate_dayz
@@ -228,6 +230,7 @@ fn_install_dayz(){
 
 fn_update_dayz(){
 	fn_steamlogin_dayz
+	fn_loadconfig_dayz
 	appmanifestfile=${DAYZ_PATH}/serverfiles/steamapps/appmanifest_"${appid}".acf
 	printf "[ ... ] Checking for update: SteamCMD"
 	# gets currentbuild
@@ -285,7 +288,8 @@ fn_update_dayz(){
 }
 
 fn_runvalidate_dayz(){
-	${DAYZ_PATH}/steamcmd/steamcmd.sh +force_install_dir ${DAYZ_PATH}/serverfiles +app_update "${appid}" validate +login "${steamlogin}" +@sSteamCmdForcePlatformType windows  +quit
+	fn_loadconfig_dayz
+	${DAYZ_PATH}/steamcmd/steamcmd.sh +force_install_dir ${DAYZ_PATH}/serverfiles +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +app_update "${appid}" +quit
 }
 
 fn_validate_dayz(){
