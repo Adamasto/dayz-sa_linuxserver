@@ -203,7 +203,7 @@ fn_steamlogin_dayz(){
 }
 
 fn_runupdate_dayz(){
-	${DAYZ_PATH}/steamcmd/steamcmd.sh +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +force_install_dir ${DAYZ_PATH}/serverfiles +app_update "${appid}" +quit
+	${DAYZ_PATH}/steamcmd/steamcmd.sh +force_install_dir ${DAYZ_PATH}/serverfiles +login "${steamlogin}" +@sSteamCmdForcePlatformType windows +app_update "${appid}" +quit
 }
 
 fn_install_dayz(){
